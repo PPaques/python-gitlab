@@ -1084,6 +1084,7 @@ class GroupIssueManager(ListMixin, RESTManager):
         "state",
         "labels",
         "milestone",
+        "iteration",
         "order_by",
         "sort",
         "iids",
@@ -1296,6 +1297,40 @@ class GroupMilestoneManager(CRUDMixin, RESTManager):
     _list_filters = ("iids", "state", "search")
 
 
+class GroupIteration(SaveMixin, ObjectDeleteMixin, RESTObject):
+    _short_print_attr = "title"
+
+    @cli.register_custom_action("GroupIteration")
+    @exc.on_http_error(exc.GitlabListError)
+    def issues(self, **kwargs):
+        """List issues related to this Iteration.
+
+        Args:
+            **kwargs: Extra options to send to the server (e.g. sudo)
+
+        Raises:
+            GitlabAuthenticationError: If authentication is not correct
+            GitlabListError: If the list could not be retrieved
+
+        Returns:
+            The list of issues
+        """
+        manager = GroupIssueManager(self.manager.gitlab, parent=self.manager._parent)
+        return manager.list(iteration_id=self.get_id(), **kwargs)
+
+
+class GroupIterationManager(CRUDMixin, RESTManager):
+    _path = "/groups/%(group_id)s/iterations"
+    _obj_cls = GroupIteration
+    _from_parent_attrs = {"group_id": "id"}
+    _create_attrs = (("title",), ("description", "due_date", "start_date"))
+    _update_attrs = (
+        tuple(),
+        ("title", "description", "due_date", "start_date", "state"),
+    )
+    _list_filters = ("iids", "state", "search")
+
+
 class GroupNotificationSettings(NotificationSettings):
     pass
 
@@ -1396,6 +1431,7 @@ class Group(SaveMixin, ObjectDeleteMixin, RESTObject):
         ("members", "GroupMemberManager"),
         ("mergerequests", "GroupMergeRequestManager"),
         ("milestones", "GroupMilestoneManager"),
+        ("iterations", "GroupIterationManager"),
         ("notificationsettings", "GroupNotificationSettingsManager"),
         ("packages", "GroupPackageManager"),
         ("projects", "GroupProjectManager"),
@@ -1648,6 +1684,7 @@ class IssueManager(ListMixin, RESTManager):
         "state",
         "labels",
         "milestone",
+        "iteration",
         "scope",
         "author_id",
         "assignee_id",
@@ -2781,6 +2818,7 @@ class ProjectIssueManager(CRUDMixin, RESTManager):
         "state",
         "labels",
         "milestone",
+        "iteration",
         "scope",
         "author_id",
         "assignee_id",
@@ -2801,6 +2839,7 @@ class ProjectIssueManager(CRUDMixin, RESTManager):
             "assignee_ids",
             "assignee_id",
             "milestone_id",
+            "iteration_id",
             "labels",
             "created_at",
             "due_date",
@@ -2817,6 +2856,7 @@ class ProjectIssueManager(CRUDMixin, RESTManager):
             "assignee_ids",
             "assignee_id",
             "milestone_id",
+            "iteration_id",
             "labels",
             "state_event",
             "updated_at",
@@ -3572,6 +3612,45 @@ class ProjectMilestoneManager(CRUDMixin, RESTManager):
     _update_attrs = (
         tuple(),
         ("title", "description", "due_date", "start_date", "state_event"),
+    )
+    _list_filters = ("iids", "state", "search")
+
+
+class ProjectIteration(SaveMixin, ObjectDeleteMixin, RESTObject):
+    _short_print_attr = "title"
+
+    @cli.register_custom_action("ProjectIteration")
+    @exc.on_http_error(exc.GitlabListError)
+    def issues(self, **kwargs):
+        """List issues related to this milestone.
+
+        Args:
+            **kwargs: Extra options to send to the server (e.g. sudo)
+
+        Raises:
+            GitlabAuthenticationError: If authentication is not correct
+            GitlabListError: If the list could not be retrieved
+
+        Returns:
+            The list of issues
+        """
+
+        manager = ProjectIssueManager(self.manager.gitlab, parent=self.manager._parent)
+
+        return manager.list(iteration_id=self.get_id(), **kwargs)
+
+
+class ProjectIterationManager(CRUDMixin, RESTManager):
+    _path = "/projects/%(project_id)s/iterations"
+    _obj_cls = ProjectIteration
+    _from_parent_attrs = {"project_id": "id"}
+    _create_attrs = (
+        ("title",),
+        ("description", "due_date", "start_date", "state"),
+    )
+    _update_attrs = (
+        tuple(),
+        ("title", "description", "due_date", "start_date", "state"),
     )
     _list_filters = ("iids", "state", "search")
 
@@ -4690,6 +4769,7 @@ class Project(SaveMixin, ObjectDeleteMixin, RESTObject):
         ("members", "ProjectMemberManager"),
         ("mergerequests", "ProjectMergeRequestManager"),
         ("milestones", "ProjectMilestoneManager"),
+        ("iterations", "ProjectIterationManager"),
         ("notes", "ProjectNoteManager"),
         ("notificationsettings", "ProjectNotificationSettingsManager"),
         ("packages", "ProjectPackageManager"),
