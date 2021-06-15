@@ -2953,11 +2953,11 @@ class ProjectPagesDomainManager(CRUDMixin, RESTManager):
     _update_attrs = (tuple(), ("certificate", "key"))
 
 
-class ProjectRelease(RESTObject):
+class ProjectRelease(SaveMixin, RESTObject):
     _id_attr = "tag_name"
 
 
-class ProjectReleaseManager(NoUpdateMixin, RESTManager):
+class ProjectReleaseManager(CRUDMixin, RESTManager):
     _path = "/projects/%(project_id)s/releases"
     _obj_cls = ProjectRelease
     _from_parent_attrs = {"project_id": "id"}
